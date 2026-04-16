@@ -1,22 +1,33 @@
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from app.database.supabaseconnection import supabase
+import requests
+import os
 
 security = HTTPBearer()
+
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
     token = credentials.credentials
 
-    try:       
-        supabase.auth.set_session(access_token=token, refresh_token=token)
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "apikey": SUPABASE_KEY,
+        "Content-Type": "application/json"
+    }
 
-        user = supabase.auth.get_user()
+    response = requests.get(
+        f"{SUPABASE_URL}/auth/v1/user",
+        headers=headers
+    )    
 
-        if user.user is None:
-            raise HTTPException(status_code=401, detail="Invalid token")
-
-        return user.user
-
-    except Exception as e:
-        print("Auth error:", str(e))   # debug
+    if response.status_code != 200:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+    user = response.json()
+
+    if not user or "id" not in user:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
+    return user

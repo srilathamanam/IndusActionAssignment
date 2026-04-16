@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from app.utils.api_response import api_failure_response
 
 # Global exception handling
-async def global_exception_handler(request: Request, status: HTTPException):
+def global_exception_handler(request: Request, status: HTTPException):
     return JSONResponse(
         status_code=status,
         content=api_failure_response(

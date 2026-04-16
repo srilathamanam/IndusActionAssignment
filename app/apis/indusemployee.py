@@ -26,7 +26,7 @@ def login(email: str, password: str):
         "password": password
     })
 
-    if response.user is None:
+    if not response.session:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     return {
